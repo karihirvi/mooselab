@@ -1,0 +1,8 @@
+The 'bsd' folder contains (hopefully) useful helper-like code and templates that
+you can take and modify for your custom project.
+
+Contents:
+1) qtcreator/wizards
+ - Contains wizards for QtCreator, copy these folders to you QtCreator wizards directory.
+   The actual path may vary, but it's something like C:\Qt\Tools\QtCreator\share\qtcreator\templates\wizards
+   on windows and ~/Qt/Tools/QtCreator/share/qtcreator/templates/wizards on linux.
