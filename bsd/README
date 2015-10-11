@@ -6,3 +6,14 @@ Contents:
  - Contains wizards for QtCreator, copy these folders to you QtCreator wizards directory.
    The actual path may vary, but it's something like C:\Qt\Tools\QtCreator\share\qtcreator\templates\wizards
    on windows and ~/Qt/Tools/QtCreator/share/qtcreator/templates/wizards on linux.
+   
+2) cmake/lib
+ - cmake script(s) for downloading, compiling and installing various 3rd party
+   libraries. At the moment, mainly geared towards compiling mlpack
+   (http://www.mlpack.org/)
+   
+3) cpp
+ - C++/Qt related utility classes and projects
+ 
+4) matlab
+ - Matlab related utility classes and projects
