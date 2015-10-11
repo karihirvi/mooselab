@@ -16,6 +16,18 @@ message("INSTALL_ROOT = ${INSTALL_ROOT}")
 
 ProcessorCount(JJ)
 
+if (DEFINED WIN32)
+  add_custom_target(phase1
+    DEPENDS arpack-ng-build lapack-build openblas-build   
+  )
+  add_custom_target(phase2
+    DEPENDS arpack-ng-finalize
+  )
+  add_custom_target(phase3
+    DEPENDS zlib-build libiconv-build libxml2-build boost-build armadillo-build
+  )
+endif()
+
 #***********************************
 # Downloads
 #***********************************
@@ -73,12 +85,9 @@ ExternalProject_Add(armadillo-download
 
 # zlib
 ExternalProject_Add(zlib-download
-  PREFIX downloads/zlib-download
-  #URL http://sourceforge.net/projects/libpng/files/zlib/1.2.8/zlib128-dll.zip/download?use_mirror=skylink&download=
+  PREFIX downloads/zlib-download  
   URL http://zlib.net/zlib128.zip
-  #DOWNLOAD_NAME zlib-128-dll.zip
   DOWNLOAD_NAME zlib128.zip
-  #URL_HASH MD5=42eccc2af5bac6b7a1188d7817d03549
   URL_HASH SHA1=5782f3539015ead310234fd8637a7fe78af3d16c
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
@@ -208,7 +217,7 @@ ExternalProject_Get_Property(lapack-download download_dir download_name)
 if (DEFINED UNIX)
   ExternalProject_Add(lapack-build
     PREFIX builds/lapack-build
-    DEPENDS lapack-download 
+    DEPENDS lapack-download openblas-build
     URL ${download_dir}/${download_name}
     URL_HASH SHA1=5870081889bf5d15fd977993daab29cf3c5ea970
     CMAKE_GENERATOR "MSYS Makefiles"
@@ -240,7 +249,7 @@ if (DEFINED UNIX)
     URL ${download_dir}/${download_name}
     URL_HASH SHA1=128d04d82399c4174e1b32572845055aaaafef47
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ./configure --prefix=${INSTALL_ROOT}
+    CONFIGURE_COMMAND ./configure --prefix=${INSTALL_ROOT} 
     BUILD_COMMAND make -j${JJ}
     INSTALL_COMMAND make install
   )
@@ -249,12 +258,12 @@ endif()
 if (DEFINED WIN32)
   ExternalProject_Add(arpack-ng-build
     PREFIX builds/arpack-ng-build
-    DEPENDS arpack-ng-download 
+    DEPENDS arpack-ng-download openblas-build lapack-build
     URL ${download_dir}/${download_name}
     URL_HASH SHA1=128d04d82399c4174e1b32572845055aaaafef47
     CMAKE_GENERATOR "MSYS Makefiles"
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ./configure --prefix=${INSTALL_ROOT} --host=x86_64-w64-mingw32 --with-blas=${INSTALL_ROOT}/bin/libopenblas.dll
+    CONFIGURE_COMMAND ./configure --prefix=${INSTALL_ROOT} --host=x86_64-w64-mingw32 --with-blas=${INSTALL_ROOT}/bin/libopenblas.dll --with-lapack=${INSTALL_ROOT}/bin/liblapack.dll
     BUILD_COMMAND make
     INSTALL_COMMAND make install
   )
@@ -262,34 +271,6 @@ if (DEFINED WIN32)
   add_custom_target(arpack-ng-finalize
     COMMAND sh -c "cd builds/arpack-ng-build/src/arpack-ng-build && x86_64-w64-mingw32-gfortran -shared  -Wl,--whole-archive ./SRC/.libs/libarpacksrc.a ./UTIL/.libs/libarpackutil.a -Wl,--no-whole-archive -O2   -o .libs/libarpack-2.dll -Wl,--enable-auto-image-base -Xlinker --out-implib -Xlinker .libs/libarpack.dll.a -Wl,-L${INSTALL_ROOT}/bin -llibopenblas"
     COMMAND sh -c "cd builds/arpack-ng-build/src/arpack-ng-build && cp .libs/libarpack.dll.a ${INSTALL_ROOT}/lib && cp .libs/libarpack-2.dll ${INSTALL_ROOT}/bin" 
-  )
-endif()
-
-# Armadillo
-ExternalProject_Get_Property(armadillo-download download_dir download_name)
-if (DEFINED UNIX)
-  ExternalProject_Add(armadillo-build
-    PREFIX builds/armadillo-build
-    DEPENDS armadillo-download 
-    URL ${download_dir}/${download_name}
-    URL_HASH SHA1=e7d8392dfcc7227c17bcdbe18ad88f2995115556
-    BUILD_IN_SOURCE 1
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_ROOT} -DCMAKE_PREFIX_PATH=${INSTALL_ROOT}
-    BUILD_COMMAND make -j${JJ}
-    INSTALL_COMMAND make install
-  )
-endif()
-
-if (DEFINED WIN32)
-  ExternalProject_Add(armadillo-build
-    PREFIX builds/armadillo-build
-    DEPENDS armadillo-download 
-    URL ${download_dir}/${download_name}
-    URL_HASH SHA1=e7d8392dfcc7227c17bcdbe18ad88f2995115556
-    BUILD_IN_SOURCE 1
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_ROOT} -DCMAKE_PREFIX_PATH=${INSTALL_ROOT}
-    BUILD_COMMAND make -j${JJ}
-    INSTALL_COMMAND make install
   )
 endif()
 
@@ -308,18 +289,6 @@ if (DEFINED UNIX)
   )
 endif()
 
-#if (DEFINED WIN32)
-#  ExternalProject_Add(zlib-build
-#    PREFIX builds/zlib-build
-#    DEPENDS zlib-download 
-#    URL ${download_dir}/${download_name}
-#    URL_HASH MD5=42eccc2af5bac6b7a1188d7817d03549
-#    BUILD_IN_SOURCE 1
-#    CONFIGURE_COMMAND ""
-#    BUILD_COMMAND ""
-#    INSTALL_COMMAND cp zlib1.dll ${INSTALL_ROOT}/bin COMMAND cp include/zlib.h include/zconf.h ${INSTALL_ROOT}/include COMMAND cp lib/zdll.lib lib/zlib.def ${INSTALL_ROOT}/lib
-#  )
-#endif()
 if (DEFINED WIN32)
   ExternalProject_Add(zlib-build
     PREFIX builds/zlib-build
@@ -335,10 +304,13 @@ endif()
 
 # libiconv
 ExternalProject_Get_Property(libiconv-download download_dir download_name)
-
+if (DEFINED UNIX)
+  ExternalProject_Add(libiconv-build
+  )
+endif()
 
 if (DEFINED WIN32)
-  ExternalProject_Add(libiconv-build2
+  ExternalProject_Add(libiconv-build
     PREFIX builds/libiconv-build
     DEPENDS libiconv-download 
     URL ${download_dir}/${download_name}
@@ -355,7 +327,7 @@ ExternalProject_Get_Property(libxml2-download download_dir download_name)
 if (DEFINED UNIX)
   ExternalProject_Add(libxml2-build
     PREFIX builds/libxml2-build
-    DEPENDS libxml2-download 
+    DEPENDS libxml2-download zlib-build libiconv-build
     URL ${download_dir}/${download_name}
     URL_HASH SHA1=f46a37ea6d869f702e03f393c376760f3cbee673
     BUILD_IN_SOURCE 1
@@ -368,7 +340,7 @@ endif()
 if (DEFINED WIN32)
   ExternalProject_Add(libxml2-build
     PREFIX builds/libxml2-build
-    DEPENDS libxml2-download 
+    DEPENDS libxml2-download zlib-build libiconv-build
     URL ${download_dir}/${download_name}
     URL_HASH SHA1=f46a37ea6d869f702e03f393c376760f3cbee673
     BUILD_IN_SOURCE 1
@@ -380,8 +352,8 @@ endif()
 
 # boost
 ExternalProject_Get_Property(boost-download download_dir download_name)
-set (BUILD_CMD_BASE ./bjam -j${JJ} variant=release --layout=tagged --with-math --with-program_options --with-random threading=multi)
-set (INSTALL_CMD_BASE ./bjam -j${JJ} variant=release --layout=tagged --with-math --with-program_options --with-random threading=multi)
+set (BUILD_CMD_BASE ./b2 -j${JJ} variant=release --layout=tagged --with-math --with-program_options --with-random threading=multi link=shared)
+set (INSTALL_CMD_BASE ./b2 -j${JJ} variant=release --layout=tagged --with-math --with-program_options --with-random threading=multi link=shared)
 set (BUILD_CMD_X64 ${BUILD_CMD_BASE} stage)
 set (INSTALL_CMD_X64 ${INSTALL_CMD_BASE} --prefix=${INSTALL_ROOT} install)
 
@@ -404,6 +376,35 @@ if (DEFINED WIN32)
   )
 endif()
 
+# Armadillo
+ExternalProject_Get_Property(armadillo-download download_dir download_name)
+if (DEFINED UNIX)
+  ExternalProject_Add(armadillo-build
+    PREFIX builds/armadillo-build
+    DEPENDS armadillo-download 
+    URL ${download_dir}/${download_name}
+    URL_HASH SHA1=e7d8392dfcc7227c17bcdbe18ad88f2995115556
+    BUILD_IN_SOURCE 1
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_ROOT} -DCMAKE_PREFIX_PATH=${INSTALL_ROOT}
+    BUILD_COMMAND make -j${JJ}
+    INSTALL_COMMAND make install
+  )
+endif()
+
+if (DEFINED WIN32)
+  ExternalProject_Add(armadillo-build
+    PREFIX builds/armadillo-build
+    DEPENDS armadillo-download lapack-build openblas-build
+    URL ${download_dir}/${download_name}
+    URL_HASH SHA1=e7d8392dfcc7227c17bcdbe18ad88f2995115556
+    BUILD_IN_SOURCE 1
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_ROOT} -DCMAKE_PREFIX_PATH=${INSTALL_ROOT} -DCMAKE_CXX_FLAGS=-std=c++11
+    #BUILD_COMMAND sed -i s://\ \#define\ ARMA_64BIT_WORD:\#define\ ARMA_64BIT_WORD: include/armadillo_bits/config.hpp COMMAND sed -i s://\ \#define\ ARMA_64BIT_WORD:\#define\ ARMA_64BIT_WORD: include/armadillo_bits/config.hpp.cmake COMMAND make -j${JJ} 
+    BUILD_COMMAND make -j${JJ}
+    INSTALL_COMMAND make install COMMAND sed -i s://\ \#define\ ARMA_64BIT_WORD:\#define\ ARMA_64BIT_WORD: ${INSTALL_ROOT}/include/armadillo_bits/config.hpp
+  )
+endif()
+
 ExternalProject_Get_Property(mlpack-download download_dir download_name)
 if (DEFINED UNIX)
 
@@ -413,10 +414,10 @@ endif()
 if (DEFINED WIN32)
   ExternalProject_Add(mlpack-build
     PREFIX builds/mlpack-build
-    DEPENDS mlpack-download 
+    DEPENDS mlpack-download armadillo-build boost-build libxml2-build
     URL ${download_dir}/${download_name}
     URL_HASH SHA1=ad4909e4978edf03ff70d5f3d884efb24b5992a4
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_ROOT} -DCMAKE_PREFIX_PATH=${INSTALL_ROOT} -DDEBUG=OFF -DPROFILE=OFF
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${INSTALL_ROOT} -DCMAKE_PREFIX_PATH=${INSTALL_ROOT} -DDEBUG=OFF -DPROFILE=OFF 
     BUILD_COMMAND make -j${JJ}
     INSTALL_COMMAND make install
   )
