@@ -48,10 +48,10 @@ AppException& AppException::operator=(const AppException &rhs)
   return *this;
 }
 
-const char *AppException::what() const
+const char *AppException::what() const noexcept
 {
   return d_->msg_.data();
-};
+}
 
 
 }

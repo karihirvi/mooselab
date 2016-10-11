@@ -34,7 +34,7 @@ BugFoundException& BugFoundException::operator=(BugFoundException &&rhs)
 }
 
 BugFoundException::BugFoundException(const BugFoundException &rhs) :
-  d_(std::make_unique<D>(*rhs.d_))
+  AppException(rhs), d_(std::make_unique<D>(*rhs.d_))
 {
   d_->host_ = this;
 }

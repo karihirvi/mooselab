@@ -16,8 +16,10 @@ LIBS += -L$${DESTDIR} -lexception$${D}
 
 SOURCES += main.cpp \
     demo.cpp \
-    client.cpp
+    client.cpp \
+    enumdemo.cpp
 
 HEADERS += \
     demo.h \
-    client.h
+    client.h \
+    enumdemo.h

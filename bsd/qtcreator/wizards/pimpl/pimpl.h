@@ -26,5 +26,5 @@ private:
 };
   
 }
-#endif // zenniz::%ClassName:u%_H
+#endif // %ClassName:u%_H
 

@@ -16,5 +16,7 @@ HEADERS +=\
         cpp14.h \
     appexception.h \
     appassert.h \
-    bugfoundexception.h
+    bugfoundexception.h \
+    appenum.h \
+    defs.h
 
